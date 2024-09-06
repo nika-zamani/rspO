@@ -3,38 +3,59 @@
 
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import ClockCycles
+from cocotb.regression import TestFactory
+from cocotb.triggers import RisingEdge, ClockCycles
 
 
-@cocotb.test()
+@cocotb.coroutine
 async def test_project(dut):
-    dut._log.info("Start")
+    dut._log.info("Starting the testbench")
 
-    # Set the clock period to 10 us (100 KHz)
-    clock = Clock(dut.clk, 10, units="us")
+    # Set the clock period (adjust to match your FPGA clock frequency)
+    clock_period = 10  # 10 ns period for 100 MHz clock
+    clock = Clock(dut.clk, clock_period, units="ns")
     cocotb.start_soon(clock.start())
 
-    # Reset
-    dut._log.info("Reset")
+    # Apply reset
+    dut._log.info("Applying reset")
     dut.ena.value = 1
     dut.ui_in.value = 0
     dut.uio_in.value = 0
     dut.rst_n.value = 0
     await ClockCycles(dut.clk, 10)
     dut.rst_n.value = 1
+    await RisingEdge(dut.clk)
 
-    dut._log.info("Test project behavior")
+    # Test case 1: Player 1 chooses Rock, Player 2 chooses Rock
+    dut._log.info("Running Test Case 1: Both players choose Rock")
+    dut.uio_in.value = 8'b00000001  # Player 1: Rock, Player 2: Rock, Start button pressed
+    await RisingEdge(dut.clk)
+    dut.uio_in.value = 8'b00000000  # Release Start button
+    await RisingEdge(dut.clk)
+    # Check the expected output (e.g., draw result)
+    # Adjust the expected result as per your game logic
+    assert dut.uo_out.value == expected_draw_result
 
-    # Set the input values you want to test
-    dut.ui_in.value = 20
-    dut.uio_in.value = 30
+    # Test case 2: Player 1 chooses Rock, Player 2 chooses Paper
+    dut._log.info("Running Test Case 2: Player 1 chooses Rock, Player 2 chooses Paper")
+    dut.uio_in.value = 8'b00000101  # Player 1: Rock, Player 2: Paper, Start button pressed
+    await RisingEdge(dut.clk)
+    dut.uio_in.value = 8'b00000000  # Release Start button
+    await RisingEdge(dut.clk)
+    # Check the expected output (e.g., Player 2 wins)
+    assert dut.uo_out.value == expected_paper_win_result
 
-    # Wait for one clock cycle to see the output values
-    await ClockCycles(dut.clk, 1)
+    # Test case 3: Player 1 chooses Scissors, Player 2 chooses Paper
+    dut._log.info("Running Test Case 3: Player 1 chooses Scissors, Player 2 chooses Paper")
+    dut.uio_in.value = 8'b00001011  # Player 1: Scissors, Player 2: Paper, Start button pressed
+    await RisingEdge(dut.clk)
+    dut.uio_in.value = 8'b00000000  # Release Start button
+    await RisingEdge(dut.clk)
+    # Check the expected output (e.g., Player 1 wins)
+    assert dut.uo_out.value == expected_scissors_win_result
 
-    # The following assersion is just an example of how to check the output values.
-    # Change it to match the actual expected output of your module:
-    assert dut.uo_out.value == 50
+    # End simulation
+    dut._log.info("Ending the testbench")
+    await ClockCycles(dut.clk, 10)
+    cocotb.finished()
 
-    # Keep testing the module by changing the input values, waiting for
-    # one or more clock cycles, and asserting the expected output values.
