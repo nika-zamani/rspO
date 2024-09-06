@@ -1,0 +1,56 @@
+module seven_segment_display (
+    input logic clk,
+    input logic rst_n,
+    input logic [1:0] data,           // Data to display (00, 01, 10)
+    output logic [6:0] seg,           // Seven-segment display segments
+    output logic [3:0] an             // Seven-segment display anodes (only 1 active)
+);
+
+    // Internal signals
+    logic [3:0] digit;
+    logic [31:0] counter;
+
+    // Seven-segment decoder
+    always_comb begin
+        case (data)
+            2'b00: digit = 4'b0000; // Display "0"
+            2'b01: digit = 4'b0001; // Display "1"
+            2'b10: digit = 4'b0010; // Display "2"
+            default: digit = 4'b1111; // Display nothing or error
+        endcase
+    end
+
+    // Seven-segment display encoding
+    always_comb begin
+        case (digit)
+            4'b0000: seg = 7'b0111111; // 0
+            4'b0001: seg = 7'b0000110; // 1
+            4'b0010: seg = 7'b1011011; // 2
+            4'b0011: seg = 7'b1001111; // 3
+            4'b0100: seg = 7'b1100110; // 4
+            4'b0101: seg = 7'b1101101; // 5
+            4'b0110: seg = 7'b1111101; // 6
+            4'b0111: seg = 7'b0000111; // 7
+            4'b1000: seg = 7'b1111111; // 8
+            4'b1001: seg = 7'b1101111; // 9
+            default: seg = 7'b0000000; // Off
+        endcase
+    end
+
+    // Simple counter to cycle through anodes
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n)
+            counter <= 0;
+        else
+            counter <= counter + 1;
+    end
+
+    always_comb begin
+        if (counter[19]) begin
+            an = 4'b1110; // Enable only one digit (simple 1-digit display example)
+        end else begin
+            an = 4'b1111; // All digits off
+        end
+    end
+
+endmodule
