@@ -19,7 +19,7 @@
   source_files:
     - "src/rock_paper_scissors_game.sv"
     - "src/seven_segment_display.sv"
-    - "src/tt_um_example.sv"
+  
 
 # The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.
 pinout:
