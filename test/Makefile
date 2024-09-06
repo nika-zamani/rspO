@@ -33,7 +33,7 @@ endif
 
 # Include the testbench sources:
 VERILOG_SOURCES += $(PWD)/tb.v
-TOPLEVEL = tt_um_nzrps.v
+TOPLEVEL = tt_um_nzrps
 
 # MODULE is the basename of the Python test file
 MODULE = test
