@@ -1,0 +1,61 @@
+module rock_paper_scissors_game (
+    input logic clk,
+    input logic rst_n,
+    input logic [1:0] player1_choice,
+    input logic [1:0] player2_choice,
+    input logic start,
+    output logic [1:0] game_result,    // 00 = Draw, 01 = Player 1 wins, 10 = Player 2 wins
+    output logic done                   // Signal indicating game is done
+);
+
+    typedef enum logic [1:0] {
+        IDLE    = 2'b00,
+        PLAY    = 2'b01,
+        RESULT  = 2'b10
+    } state_t;
+
+    state_t current_state, next_state;
+    
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n)
+            current_state <= IDLE;
+        else
+            current_state <= next_state;
+    end
+
+    always_comb begin
+        case (current_state)
+            IDLE: begin
+                if (start)
+                    next_state = PLAY;
+                else
+                    next_state = IDLE;
+            end
+            PLAY: begin
+                next_state = RESULT;
+            end
+            RESULT: begin
+                next_state = IDLE;
+            end
+            default: next_state = IDLE;
+        endcase
+    end
+
+    always_comb begin
+        case ({player1_choice, player2_choice})
+            4'b0000: game_result = 2'b00; // Rock vs Rock
+            4'b0001: game_result = 2'b10; // Rock vs Paper (Paper wins)
+            4'b0010: game_result = 2'b01; // Rock vs Scissors (Rock wins)
+            4'b0100: game_result = 2'b10; // Paper vs Rock (Paper wins)
+            4'b0101: game_result = 2'b00; // Paper vs Paper
+            4'b0110: game_result = 2'b01; // Paper vs Scissors (Scissors wins)
+            4'b1000: game_result = 2'b01; // Scissors vs Rock (Rock wins)
+            4'b1001: game_result = 2'b10; // Scissors vs Paper (Scissors wins)
+            4'b1010: game_result = 2'b00; // Scissors vs Scissors
+            default: game_result = 2'b00; // Default to draw
+        endcase
+    end
+
+    assign done = (current_state == RESULT);
+
+endmodule
